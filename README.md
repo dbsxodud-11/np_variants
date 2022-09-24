@@ -6,5 +6,5 @@ Neural Processes(NPs) combine the strengths of neural networks and Gaussian proc
 |Model Name|Paper|Key Idea|Implementation|
 |---|---|---|---|
 |NP|[Neural Processes](https://arxiv.org/abs/1807.01622)|Combine GP and NN to achieve both flexibilty and fast prediction|Completed|
-|ANP|[Attentive Neural Processes](https://arxiv.org/abs/1901.05761)|Insert attention module to prevent underfiitng to context data||
+|ANP|[Attentive Neural Processes](https://arxiv.org/abs/1901.05761)|Insert attention module to prevent underfiitng to context data|Completed|
 |BNP|[Bootstrapping Neural Processes](https://proceedings.neurips.cc/paper/2020/hash/492114f6915a69aa3dd005aa4233ef51-Abstract.html)|Improve robustness of NP using Bootstrapping||

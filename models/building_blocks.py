@@ -4,6 +4,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Normal
 
+from .attention import Attention
+
 def init_weight(weight, initialization):
     match initialization:
         case "xavier_uniform":
@@ -48,29 +50,42 @@ class BaseMLP(nn.Module):
 
 
 class DeterministicEncoder(nn.Module):
-    def __init__(self, x_dim, y_dim, r_dim, h_dim, attention=False):
+    def __init__(self, x_dim, y_dim, r_dim, h_dim, attn_type="uniform", self_attn=False):
         super(DeterministicEncoder, self).__init__()
 
         self.model = BaseMLP(x_dim + y_dim, r_dim, hidden_dims=[h_dim]*3, activation="relu",
-                                                   weight_initialization="xavier_uniform")
+                                                    weight_initialization="xavier_uniform")
+        self.self_attn = self_attn
+        if self.self_attn:
+            self.self_attention = Attention(r_dim, r_dim, attn_type=attn_type)
+        self.cross_attention = Attention(x_dim, r_dim, attn_type=attn_type)
 
-    def forward(self, x, y):
+    def forward(self, x_context, y_context, x_target):
         """
-            x: (batch_size * num_samples * x_dim)
-            y: (batch_size * num_samples * y_dim)
+            x_context: (batch_size * num_context * x_dim)
+            y_context: (batch_size * num_context * y_dim)
+            x_target: (batch_size * num_target * x_dim)
+            self_attn: Boolean determining whether to apply self-attention
 
             output: (batch_size * r_dim)
         """
-        x = torch.cat([x, y], dim=-1)
-        return self.model(x).mean(dim=1)
+        xy_context = torch.cat([x_context, y_context], dim=-1)
+        r = self.model(xy_context)
+        if self.self_attn:
+            r = self.self_attention(r, r, r)
+        return self.cross_attention(x_target, x_context, r)
 
 
 class LatentEncoder(nn.Module):
-    def __init__(self, x_dim, y_dim, z_dim, h_dim):
+    def __init__(self, x_dim, y_dim, z_dim, h_dim, attn_type="uniform", self_attn=False):
         super(LatentEncoder, self).__init__()
 
         self.model = BaseMLP(x_dim + y_dim, h_dim, hidden_dims=[h_dim]*2, activation="relu",
                                                    weight_initialization="xavier_uniform")
+        self.self_attn = self_attn
+        if self.self_attn:
+            self.self_attention = Attention(h_dim, h_dim, attn_type=attn_type)
+
         self.mu_head = nn.Linear(h_dim, z_dim)
         init_weight(self.mu_head.weight, initialization="xavier_uniform")
         
@@ -81,14 +96,17 @@ class LatentEncoder(nn.Module):
         """
             x: (batch_size * num_samples * x_dim)
             y: (batch_size * num_samples * y_dim)
+            self_attn: Boolean determining whether to apply self-attention
 
             output: Normal(batch_size * z_dim)
         """
         x = torch.cat([x, y], dim=-1)
-        x = self.model(x)
+        h = self.model(x)
+        if self.self_attn:
+            h = self.self_attention(h, h, h)
 
-        mu = self.mu_head(x).mean(dim=1)
-        sigma = 0.1 + 0.9 * torch.sigmoid(self.sigma_head(x).mean(dim=1))
+        mu = self.mu_head(h).mean(dim=1)
+        sigma = 0.1 + 0.9 * torch.sigmoid(self.sigma_head(h).mean(dim=1))
         return Normal(mu, sigma)
 
 
@@ -104,13 +122,12 @@ class Decoder(nn.Module):
     def forward(self, x, r, z):
         """
             x: (batch_size * num_samples * x_dim)
-            r: (batch_size * r_dim)
-            z: (batch_size * z_dim)
+            r: (batch_size * num_samples * r_dim)
+            z: (batch_size * num_samples * z_dim)
 
             output: (batch_size * nun_samples * y_dim)
         """
         num_samples = x.shape[1]
-        r = r.unsqueeze(1).repeat(1, num_samples, 1)
         z = z.unsqueeze(1).repeat(1, num_samples, 1)
 
         x = torch.cat([x, r, z], dim=-1)
