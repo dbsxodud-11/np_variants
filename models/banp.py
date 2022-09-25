@@ -5,9 +5,9 @@ from utils import sample_with_replacement
 from models.building_blocks import BaseMLP, DeterministicEncoder, Decoder
 
 
-class BootstrappingNeuralProcess(nn.Module):
-    def __init__(self, x_dim, y_dim, h_dim=128, r_dim=128, train_num_samples=4, test_num_samples=50):
-        super(BootstrappingNeuralProcess, self).__init__()
+class BootstrappingAttentiveNeuralProcess(nn.Module):
+    def __init__(self, x_dim, y_dim, h_dim=128, r_dim=128, attn_type="laplace", self_attn=True, train_num_samples=4, test_num_samples=50):
+        super(BootstrappingAttentiveNeuralProcess, self).__init__()
         self.x_dim = x_dim
         self.y_dim = y_dim
         self.h_dim = h_dim
@@ -16,8 +16,8 @@ class BootstrappingNeuralProcess(nn.Module):
         self.train_num_samples = train_num_samples
         self.test_num_samples = test_num_samples
 
-        self.deterministic_encoder_base = DeterministicEncoder(x_dim, y_dim, h_dim, h_dim, num_layers=2, attn_type="uniform", self_attn=False)
-        self.deterministic_encoder_bootstrap = DeterministicEncoder(x_dim, y_dim, h_dim, h_dim, num_layers=2, attn_type="uniform", self_attn=False)
+        self.deterministic_encoder_base = DeterministicEncoder(x_dim, y_dim, h_dim, h_dim, num_layers=2, attn_type=attn_type, self_attn=self_attn)
+        self.deterministic_encoder_bootstrap = DeterministicEncoder(x_dim, y_dim, h_dim, h_dim, num_layers=2, attn_type=attn_type, self_attn=self_attn)
 
         self.adaptation_layer = BaseMLP(h_dim, r_dim, hidden_dims=[h_dim]*2)
 

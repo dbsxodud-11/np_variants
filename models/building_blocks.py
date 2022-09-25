@@ -10,7 +10,7 @@ from models.initialize import init_weight, init_activation
 
 class BaseMLP(nn.Module):
     def __init__(self, input_dim, output_dim, 
-                 hidden_dims=[64] * 3, activation="relu", weight_initialization=None, bias=True):
+                 hidden_dims=[64] * 3, activation="relu", weight_initialization="xavier_uniform", bias=True):
         super(BaseMLP, self).__init__()
 
         self.layers = nn.ModuleList()
@@ -29,11 +29,10 @@ class BaseMLP(nn.Module):
 
 
 class DeterministicEncoder(nn.Module):
-    def __init__(self, x_dim, y_dim, r_dim, h_dim, attn_type="uniform", self_attn=False):
+    def __init__(self, x_dim, y_dim, r_dim, h_dim, num_layers=3, attn_type="uniform", self_attn=False):
         super(DeterministicEncoder, self).__init__()
 
-        self.model = BaseMLP(x_dim + y_dim, r_dim, hidden_dims=[h_dim]*3, activation="relu",
-                                                    weight_initialization="xavier_uniform")
+        self.model = BaseMLP(x_dim + y_dim, r_dim, hidden_dims=[h_dim]*num_layers)
         self.self_attn = self_attn
         if self.self_attn:
             self.self_attention = Attention(r_dim, r_dim, attn_type=attn_type)
@@ -46,7 +45,7 @@ class DeterministicEncoder(nn.Module):
             x_target: (batch_size * num_target * x_dim)
             self_attn: Boolean determining whether to apply self-attention
 
-            output: (batch_size * r_dim)
+            output: (batch_size * num_target * r_dim)
         """
         xy_context = torch.cat([x_context, y_context], dim=-1)
         r = self.model(xy_context)
@@ -56,11 +55,10 @@ class DeterministicEncoder(nn.Module):
 
 
 class LatentEncoder(nn.Module):
-    def __init__(self, x_dim, y_dim, z_dim, h_dim, attn_type="uniform", self_attn=False):
+    def __init__(self, x_dim, y_dim, z_dim, h_dim, num_layers=3, attn_type="uniform", self_attn=False):
         super(LatentEncoder, self).__init__()
 
-        self.model = BaseMLP(x_dim + y_dim, h_dim, hidden_dims=[h_dim]*2, activation="relu",
-                                                   weight_initialization="xavier_uniform")
+        self.model = BaseMLP(x_dim + y_dim, h_dim, hidden_dims=[h_dim]*(num_layers-1))
         self.self_attn = self_attn
         if self.self_attn:
             self.self_attention = Attention(h_dim, h_dim, attn_type=attn_type)
@@ -90,11 +88,10 @@ class LatentEncoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, x_dim, y_dim, r_dim, z_dim, h_dim):
+    def __init__(self, x_dim, y_dim, r_dim, z_dim, h_dim, num_layers=3):
         super(Decoder, self).__init__()
 
-        self.model = BaseMLP(x_dim + r_dim + z_dim, h_dim, hidden_dims=[h_dim]*2, activation="relu",
-                                                           weight_initialization="xavier_uniform")
+        self.model = BaseMLP(x_dim + r_dim + z_dim, h_dim, hidden_dims=[h_dim]*(num_layers-1))
         self.mu_head = nn.Linear(h_dim, y_dim)
         self.sigma_head = nn.Linear(h_dim, y_dim)
 
