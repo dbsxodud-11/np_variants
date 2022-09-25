@@ -11,8 +11,6 @@ class AttentiveNeuralProcess(nn.Module):
         self.y_dim = y_dim
         self.h_dim = h_dim
 
-        self.self_attn = self_attn
-
         self.deterministic_encoder = DeterministicEncoder(x_dim, y_dim, r_dim, h_dim, attn_type=attn_type, self_attn=self_attn)
         self.latent_encoder = LatentEncoder(x_dim, y_dim, z_dim, h_dim, attn_type=attn_type, self_attn=self_attn)
         self.decoder = Decoder(x_dim, y_dim, r_dim, z_dim, h_dim)
