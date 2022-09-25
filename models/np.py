@@ -1,7 +1,8 @@
 
 import torch.nn as nn
 
-from .building_blocks import DeterministicEncoder, LatentEncoder, Decoder
+from models.building_blocks import DeterministicEncoder, LatentEncoder, Decoder
+
 
 class NeuralProcess(nn.Module):
     def __init__(self, x_dim, y_dim, h_dim=128, r_dim=128, z_dim=128):

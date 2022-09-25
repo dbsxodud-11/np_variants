@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from models.initialize import init_weight
 
 def uniform_attention(q, v):
     """
@@ -70,16 +71,21 @@ class MultiheadAttention(nn.Module):
         self.normalize = normalize
         self.num_heads = num_heads
 
-        embed_dim = v_dim // num_heads
-        self.layers = nn.ModuleDict({"q_proj": nn.ModuleList([nn.Linear(q_dim, embed_dim) for _ in range(num_heads)]),
-                                     "k_proj": nn.ModuleList([nn.Linear(k_dim, embed_dim) for _ in range(num_heads)]),
-                                     "v_proj": nn.ModuleList([nn.Linear(v_dim, embed_dim) for _ in range(num_heads)]),
+        self.embed_dim = v_dim // num_heads
+        self.layers = nn.ModuleDict({"q_proj": nn.Linear(q_dim, v_dim, bias=False),
+                                     "k_proj": nn.Linear(k_dim, v_dim, bias=False),
+                                     "v_proj": nn.Linear(v_dim, v_dim, bias=False),
                                      "out_layer": nn.Linear(v_dim, v_dim, bias=False)})
+        
+        for layer in self.layers.values():
+            init_weight(layer.weight, initialization="xavier_uniform")
 
     def forward(self, q, k, v):
-        multi_head_embed = torch.cat([dot_product_attention(self.layers["q_proj"][i](q), self.layers["k_proj"][i](k), self.layers["v_proj"][i](v), 
-                                                            scale=self.scale, normalize=self.normalize) for i in range(self.num_heads)], dim=-1)
-        return self.layers["out_layer"](multi_head_embed)
+        q, k, v = self.layers["q_proj"](q), self.layers["k_proj"](k), self.layers["v_proj"](v)
+        out = torch.cat([dot_product_attention(q[:, :, head*self.embed_dim: (head+1)*self.embed_dim],
+                                               k[:, :, head*self.embed_dim: (head+1)*self.embed_dim],
+                                               v[:, :, head*self.embed_dim: (head+1)*self.embed_dim], scale=self.scale, normalize=self.normalize) for head in range(self.num_heads)], dim=-1)
+        return self.layers["out_layer"](out)
 
 
 class Attention(nn.Module):

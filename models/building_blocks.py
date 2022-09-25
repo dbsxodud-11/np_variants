@@ -4,29 +4,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Normal
 
-from .attention import Attention
-
-def init_weight(weight, initialization):
-    match initialization:
-        case "xavier_uniform":
-            nn.init.xavier_uniform_(weight)
-        case "xavier_normal":
-            nn.init.xavier_normal_(weight)
-        case _:
-            pass
-
-def init_activation(activation):
-    match activation:
-        case "relu":
-            return nn.ReLU()
-        case "tanh":
-            return nn.Tanh()
-        case "sigmoid":
-            return nn.Sigmoid()
-        case "elu":
-            return nn.ELU()
-        case _:
-            NotImplementedError()
+from models.attention import Attention
+from models.initialize import init_weight, init_activation
 
 
 class BaseMLP(nn.Module):
