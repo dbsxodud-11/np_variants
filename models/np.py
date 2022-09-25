@@ -11,7 +11,7 @@ class NeuralProcess(nn.Module):
         self.y_dim = y_dim
         self.h_dim = h_dim
 
-        self.deterministic_encoder = DeterministicEncoder(x_dim, y_dim, h_dim, h_dim, attn_type="uniform", self_attn=False)
+        self.deterministic_encoder = DeterministicEncoder(x_dim, y_dim, r_dim, h_dim, attn_type="uniform", self_attn=False)
         self.latent_encoder = LatentEncoder(x_dim, y_dim, z_dim, h_dim, attn_type="uniform", self_attn=False)
         self.decoder = Decoder(x_dim, y_dim, r_dim, z_dim, h_dim)
 
@@ -21,7 +21,9 @@ class NeuralProcess(nn.Module):
             q_target = self.latent_encoder(x_target, y_target)
 
             r_context = self.deterministic_encoder(x_context, y_context, x_target)
-            z_context = q_context.rsample()
+            
+            _, num_target, _ = x_target.size()
+            z_context = q_context.rsample().unsqueeze(1).repeat(1, num_target, 1)
 
             y_pred = self.decoder(x_target, r_context, z_context)
             return y_pred, q_context, q_target
@@ -29,6 +31,9 @@ class NeuralProcess(nn.Module):
             q_context = self.latent_encoder(x_context, y_context)
 
             r_context = self.deterministic_encoder(x_context, y_context, x_target)
-            z_context = q_context.rsample()
+
+            _, num_target, _ = x_target.size()
+            z_context = q_context.rsample().unsqueeze(1).repeat(1, num_target, 1)
+
             y_pred = self.decoder(x_target, r_context, z_context)
             return y_pred

@@ -106,14 +106,11 @@ class Decoder(nn.Module):
 
             output: (batch_size * nun_samples * y_dim)
         """
-        num_samples = x.shape[1]
-        z = z.unsqueeze(1).repeat(1, num_samples, 1)
-
         x = torch.cat([x, r, z], dim=-1)
-        x = self.model(x)
+        h = self.model(x)
 
-        mu = self.mu_head(x)
-        sigma = 0.1 + 0.9 * F.softplus(self.sigma_head(x))
+        mu = self.mu_head(h)
+        sigma = 0.1 + 0.9 * F.softplus(self.sigma_head(h))
         return Normal(mu, sigma)    
 
 

@@ -23,7 +23,9 @@ class AttentiveNeuralProcess(nn.Module):
             q_target = self.latent_encoder(x_target, y_target)
 
             r_context = self.deterministic_encoder(x_context, y_context, x_target)
-            z_context = q_context.rsample()
+            
+            _, num_target, _ = x_target.size()
+            z_context = q_context.rsample().unsqueeze(1).repeat(1, num_target, 1)
 
             y_pred = self.decoder(x_target, r_context, z_context)
             return y_pred, q_context, q_target
@@ -31,6 +33,9 @@ class AttentiveNeuralProcess(nn.Module):
             q_context = self.latent_encoder(x_context, y_context)
 
             r_context = self.deterministic_encoder(x_context, y_context, x_target)
-            z_context = q_context.rsample()
+
+            _, num_target, _ = x_target.size()
+            z_context = q_context.rsample().unsqueeze(1).repeat(1, num_target, 1)
+
             y_pred = self.decoder(x_target, r_context, z_context)
             return y_pred
