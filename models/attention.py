@@ -42,7 +42,7 @@ def laplace_attention(q, k, v, scale=1.0, normalize=False):
         weights = 1.0 + torch.tanh(weights)
     return torch.matmul(weights, v)
 
-def dot_product_attention(q, k, v, scale=1.0, normalize=False):
+def dot_product_attention(q, k, v, normalize=False):
     """
         Dot Product attention.
         q: (batch_size * num_queries * q_dim)
@@ -84,7 +84,7 @@ class MultiheadAttention(nn.Module):
         q, k, v = self.layers["q_proj"](q), self.layers["k_proj"](k), self.layers["v_proj"](v)
         out = torch.cat([dot_product_attention(q[:, :, head*self.embed_dim: (head+1)*self.embed_dim],
                                                k[:, :, head*self.embed_dim: (head+1)*self.embed_dim],
-                                               v[:, :, head*self.embed_dim: (head+1)*self.embed_dim], scale=self.scale, normalize=self.normalize) for head in range(self.num_heads)], dim=-1)
+                                               v[:, :, head*self.embed_dim: (head+1)*self.embed_dim], normalize=self.normalize) for head in range(self.num_heads)], dim=-1)
         return self.layers["out_layer"](out)
 
 
@@ -124,6 +124,6 @@ class Attention(nn.Module):
             case "laplace":
                 return laplace_attention(q, k, v, scale=self.scale, normalize=self.normalize)
             case "dot_product":
-                return dot_product_attention(q, k, v, scale=self.scale, normalize=self.normalize)
+                return dot_product_attention(q, k, v, normalize=self.normalize)
             case "multihead":
                 return self.multihead_attention(q, k, v)
