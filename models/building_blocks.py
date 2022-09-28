@@ -82,8 +82,8 @@ class LatentEncoder(nn.Module):
         if self.self_attn:
             h = self.self_attention(h, h, h)
 
-        mu = self.mu_head(h).mean(dim=1)
-        sigma = 0.1 + 0.9 * torch.sigmoid(self.sigma_head(h).mean(dim=1))
+        mu = self.mu_head(h).mean(dim=-2)
+        sigma = 0.1 + 0.9 * torch.sigmoid(self.sigma_head(h).mean(dim=-2))
         return Normal(mu, sigma)
 
 

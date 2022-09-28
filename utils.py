@@ -2,8 +2,8 @@
 import numpy as np
 import torch
 
-def context_target_split(x, y, num_context, num_extra_target):
-    idx = np.random.choice(x.shape[1], size=num_context + num_extra_target, replace=False)
+def context_target_split(x, y, num_context, num_target):
+    idx = np.random.choice(x.shape[1], size=num_context + num_target, replace=False)
     
     x_context = x[:, idx[:num_context], :]
     y_context = y[:, idx[:num_context], :]
@@ -14,7 +14,6 @@ def context_target_split(x, y, num_context, num_extra_target):
     return x_context, y_context, x_target, y_target
 
 def sample_with_replacement(*items, num_samples):
-    x_resample, y_resample = [], []
     items_resample = [[] for _ in range(len(items))]
 
     for i in range(len(items)):

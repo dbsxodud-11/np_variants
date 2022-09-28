@@ -12,10 +12,9 @@ def uniform_attention(q, v):
         q: (batch_size * num_queries * q_dim)
         v: (batch_size * num_values * v_dim)
 
-        output: (batch_size * num_queries * v_dim)
+        output: (batch_size * v_dim)
     """
-    _, num_queries, _ = q.size()
-    return v.mean(dim=1, keepdim=True).repeat(1, num_queries, 1)
+    return v.mean(dim=-2)
 
 def laplace_attention(q, k, v, scale=1.0, normalize=False):
     """
