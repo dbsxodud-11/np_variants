@@ -43,7 +43,7 @@ class GPCurve:
 
 
 class RBFKernel(object):
-    def __init__(self, sigma_eps=1e-6, max_length=0.6, max_scale=1.0):
+    def __init__(self, sigma_eps=1e-3, max_length=0.6, max_scale=1.0):
         self.sigma_eps = sigma_eps
         self.max_length = max_length
         self.max_scale = max_scale
