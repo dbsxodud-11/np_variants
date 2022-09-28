@@ -117,12 +117,11 @@ class Attention(nn.Module):
 
             output: (batch-size * num_queries * v_dim)
         """
-        match self.attn_type:
-            case "uniform":
-                return uniform_attention(q, v)
-            case "laplace":
-                return laplace_attention(q, k, v, scale=self.scale, normalize=self.normalize)
-            case "dot_product":
-                return dot_product_attention(q, k, v, normalize=self.normalize)
-            case "multihead":
-                return self.multihead_attention(q, k, v)
+        if self.attn_type == "uniform":
+            return uniform_attention(q, v)
+        elif self.attn_type == "laplace":
+            return laplace_attention(q, k, v, scale=self.scale, normalize=self.normalize)
+        elif self.attn_type == "dot_product":
+            return dot_product_attention(q, k, v, normalize=self.normalize)
+        elif self.attn_type == "multihead":
+            return self.multihead_attention(q, k, v)
