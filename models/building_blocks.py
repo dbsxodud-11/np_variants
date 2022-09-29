@@ -123,9 +123,10 @@ class Decoder(nn.Module):
 
     def forward(self, x, enc, extra_enc=None):
         if self.bootstrap:
-            h_base = self.fc_base(torch.cat([x, enc], dim=-1))
-            h_bootstrap = self.fc_bootstrap(torch.cat([extra_enc]))
-            h = F.relu(h_base + h_bootstrap)
+            h = self.fc_base(torch.cat([x, enc], dim=-1))
+            if extra_enc is not None:
+                h_extra = self.fc_bootstrap(extra_enc)
+                h = F.relu(h + h_extra)
         else:
             h = torch.cat([x, enc], dim=-1)
         

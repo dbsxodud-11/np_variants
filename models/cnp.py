@@ -10,7 +10,8 @@ from models.building_blocks import DeterministicEncoder, Decoder
 
 class CNP(nn.Module):
     def __init__(self, x_dim, y_dim, r_dim=128, h_dim=128, 
-                       enc_pre_num_layers=4, enc_post_num_layers=2, dec_num_layers=3):
+                       enc_pre_num_layers=4, enc_post_num_layers=2, dec_num_layers=3,
+                       bootstrap=False):
         super(CNP, self).__init__()
 
         self.deterministic_encoder1 = DeterministicEncoder(x_dim, y_dim, r_dim, h_dim, 
@@ -24,7 +25,8 @@ class CNP(nn.Module):
                                                            post_num_layers=enc_post_num_layers, 
                                                            self_attn=False)
 
-        self.decoder = Decoder(x_dim, y_dim, r_dim * 2, h_dim, num_layers=dec_num_layers)
+        self.decoder = Decoder(x_dim, y_dim, r_dim * 2, h_dim,
+                               num_layers=dec_num_layers, bootstrap=bootstrap)
 
     def forward(self, batch, num_samples=1):
         out = AttrDict()
