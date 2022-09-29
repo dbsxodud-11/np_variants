@@ -23,9 +23,9 @@ class MultiheadAttention(nn.Module):
     def gather(self, x):
         return torch.cat(x.chunk(self.num_heads, dim=-3), dim=-1)
 
-    def attend(self, q, k, v):
+    def attend(self, q, k, v, mask=None):
         q_, k_, v_ = [self.scatter(x) for x in [q, k, v]]
-        A_logits = q_ @ k_.transpose(-2, -1) / math.sqrt(self.dim_out)
+        A_logits = q_ @ k_.transpose(-2, -1) / math.sqrt(self.out_dim)
         if mask is not None:
             mask = mask.bool().to(dtype=q.dtype, device=q.device)
             mask = torch.stack([mask] * q.shape[-2], dim=-2)
@@ -39,7 +39,7 @@ class MultiheadAttention(nn.Module):
     def forward(self, q, k, v, mask=None):
         q, k, v = self.model["q_proj"](q), self.model["k_proj"](k), self.model["v_proj"](v)
         out = self.model["ln1"](q + self.attend(q, k, v, mask=mask))
-        out = self.model["ln2"](out + F.relu(self.model["fc_out"](out)))
+        out = self.model["ln2"](out + F.relu(self.model["out_layer"](out)))
         return out
 
 class SelfAttention(MultiheadAttention):

@@ -29,7 +29,8 @@ class BaseMLP(nn.Module):
 
 
 class DeterministicEncoder(nn.Module):
-    def __init__(self, x_dim, y_dim, r_dim, h_dim, pre_num_layers=4, post_num_layers=2, self_attn=False):
+    def __init__(self, x_dim, y_dim, r_dim, h_dim, 
+                       pre_num_layers=4, post_num_layers=2, self_attn=False):
         super(DeterministicEncoder, self).__init__()
 
         if self_attn:
@@ -53,7 +54,8 @@ class DeterministicEncoder(nn.Module):
 
 
 class LatentEncoder(nn.Module):
-    def __init__(self, x_dim, y_dim, z_dim, h_dim, pre_num_layers=3, post_num_layers=2, self_attn=False):
+    def __init__(self, x_dim, y_dim, z_dim, h_dim,
+                       pre_num_layers=3, post_num_layers=2, self_attn=False):
         super(LatentEncoder, self).__init__()
 
         if self_attn:
@@ -80,7 +82,8 @@ class LatentEncoder(nn.Module):
 
 
 class CrossAttentionEncoder(nn.Module):
-    def __init__(self, x_dim, y_dim, r_dim, h_dim, qk_num_layers=2, v_num_layers=4, self_attn=True):
+    def __init__(self, x_dim, y_dim, r_dim, h_dim,
+                       qk_num_layers=2, v_num_layers=4, self_attn=True):
         super(CrossAttentionEncoder, self).__init__()
 
         self.qk_pre_model = BaseMLP(x_dim, h_dim, h_dim, num_layers=qk_num_layers)
@@ -92,7 +95,7 @@ class CrossAttentionEncoder(nn.Module):
         else:
             self.v_pre_model = BaseMLP(x_dim + y_dim, h_dim, h_dim, num_layers=v_num_layers)
 
-        self.cross_attention = MultiheadAttention(h_dim, h_dim, h_dim, h_dim)
+        self.cross_attention = MultiheadAttention(h_dim, h_dim, h_dim, r_dim)
 
     def forward(self, x_context, y_context, x_target, mask=None):
         q, k = self.qk_pre_model(x_target), self.qk_pre_model(x_context)
@@ -105,7 +108,8 @@ class CrossAttentionEncoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, x_dim, y_dim, enc_dim, h_dim, num_layers=3, bootstrap=False):
+    def __init__(self, x_dim, y_dim, enc_dim, h_dim,
+                       num_layers=3, bootstrap=False):
         super(Decoder, self).__init__()
 
         self.bootstrap = bootstrap
