@@ -20,19 +20,15 @@ class GP_REGRESSION(object):
         self.lb = lb
         self.ub = ub
         
-    def sample(self, batch_size, num_samples, device):
-        """
-            Samples Data from Gaussian Process
-            
-            Output: (batch_size * num_samples * dim), (batch_size * num_samples * 1)
-        """
+    def sample(self, batch_size, max_num_points, device):
         batch = AttrDict()
-        num_context = random.randint(3, num_samples-3)
-        num_target = random.randint(3, num_samples-num_context)
+        num_context = torch.randint(low=3, high=max_num_points-3, size=(1, )).item()
+        num_target = torch.randint(low=3, high=max_num_points-num_context, size=(1, )).item()
 
-        batch.x_target = self.lb + (self.ub - self.lb) * torch.rand(batch_size, num_context+num_target, self.dim).to(device)
+        num_samples = num_context + num_target
+        batch.x_target = self.lb + (self.ub - self.lb) * torch.rand(batch_size, num_samples, self.dim).to(device)
 
-        mean = torch.zeros(batch_size, num_context+num_target).to(device)
+        mean = torch.zeros(batch_size, num_samples).to(device)
         cov = self.kernel(batch.x_target)
         batch.y_target = MultivariateNormal(mean, cov).rsample().unsqueeze(-1)
 

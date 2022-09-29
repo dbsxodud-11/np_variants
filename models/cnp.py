@@ -26,13 +26,22 @@ class CNP(nn.Module):
 
     def forward(self, batch, num_samples=1):
         out = AttrDict()
-        if self.training:
-            h1 = self.deterministic_encoder1(batch.x_context, batch.y_context)
-            h2 = self.deterministic_encoder2(batch.x_context, batch.y_context)
-            h = stack_tensor(torch.cat([h1, h2], dim=-1), batch.x_target.shape[-2], dim=-2)
+        num_context, num_target = batch.x_context.shape[-2], batch.x_target.shape[-2]
 
-            p_y_pred = self.decoder(batch.x_target, h)
+        h1 = self.deterministic_encoder1(batch.x_context, batch.y_context)
+        h2 = self.deterministic_encoder2(batch.x_context, batch.y_context)
+        h = stack_tensor(torch.cat([h1, h2], dim=-1), num_target, dim=-2)
+
+        p_y_pred = self.decoder(batch.x_target, h)
+
+        if self.training:
             out.loss = -p_y_pred.log_prob(stack_tensor(batch.y_target)).sum(dim=-1).mean()
-            return out
+        else:
+            
+            likelihood = p_y_pred.log_prob(stack_tensor(batch.y_target)).sum(dim=-1)
+            out.context_likelihood = likelihood[..., :num_context].mean()
+            out.target_likelihood = likelihood[..., num_context:].mean()
+        
+        return out
 
 

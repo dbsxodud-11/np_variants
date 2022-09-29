@@ -26,16 +26,24 @@ def load_model(task_name, model_name):
     model = model_cls(**config).cuda()
     return model
 
+def load_trained_model(task_name, model_name, exp_id):
+    results_path = load_results_path(task_name, model_name, exp_id)
+    ckpt = torch.load(pjoin(results_path, "ckpt.tar"))
+    
+    model = load_model(task_name, model_name)
+    model.load_state_dict(ckpt.model)
+    return model
+
 def load_results_path(task_name, model_name, exp_id):
     results_path = pjoin('./results', task_name, model_name, exp_id)
     if not os.path.isdir(results_path):
         os.makedirs(results_path)
     return results_path
 
-def load_logger(results_path, mode='a'):
+def load_logger(results_path, mode='train'):
     logging.basicConfig(level=logging.INFO, format='%(message)s')
     logger = logging.getLogger()
-    logger.addHandler(logging.FileHandler(pjoin(results_path, f'train_{time.strftime("%Y%m%d-%H%M")}.log'), mode=mode))
+    logger.addHandler(logging.FileHandler(pjoin(results_path, f'{mode}_{time.strftime("%Y%m%d-%H%M")}.log'), mode='a'))
     return logger
 
 def save_info(args):
