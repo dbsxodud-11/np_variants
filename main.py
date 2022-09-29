@@ -4,6 +4,7 @@ import argparse
 import torch
 from torch.optim import Adam
 from torch.optim.lr_scheduler import CosineAnnealingLR
+from tqdm import tqdm
 
 from utils.log import RunningAverage
 from utils.load_save import load_task, load_model, load_trained_model, load_results_path, load_logger, save_info, save_model
@@ -18,7 +19,7 @@ def train(args, task, model):
     logger = load_logger(args.results_path, "train")
     logger.info(f'Total number of parameters: {sum(p.numel() for p in model.parameters())}\n')
 
-    for step in range(1, args.num_steps + 1):
+    for step in tqdm(range(1, args.num_steps + 1)):
         model.train()
         optimizer.zero_grad()
         batch = task.sample(batch_size=args.train_batch_size,
@@ -52,7 +53,7 @@ def evaluate(args, task, model):
     
     model.eval()
     with torch.no_grad():
-        for _ in range(args.eval_num_batches):
+        for _ in tqdm(range(args.eval_num_batches)):
             batch = task.sample(batch_size=args.eval_batch_size,
                                 max_num_points=args.max_num_points,
                                 device="cuda")

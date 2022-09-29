@@ -1,4 +1,5 @@
 
+from inspect import stack
 import torch
 import torch.nn as nn
 from attrdict import AttrDict
@@ -8,7 +9,8 @@ from models.building_blocks import DeterministicEncoder, Decoder
 
 
 class CNP(nn.Module):
-    def __init__(self, x_dim, y_dim, r_dim=128, h_dim=128, enc_pre_num_layers=4, enc_post_num_layers=2, dec_num_layers=3):
+    def __init__(self, x_dim, y_dim, r_dim=128, h_dim=128, 
+                       enc_pre_num_layers=4, enc_post_num_layers=2, dec_num_layers=3):
         super(CNP, self).__init__()
 
         self.deterministic_encoder1 = DeterministicEncoder(x_dim, y_dim, r_dim, h_dim, 
@@ -35,10 +37,9 @@ class CNP(nn.Module):
         p_y_pred = self.decoder(batch.x_target, h)
 
         if self.training:
-            out.loss = -p_y_pred.log_prob(stack_tensor(batch.y_target)).sum(dim=-1).mean()
+            out.loss = -p_y_pred.log_prob(batch.y_target).sum(dim=-1).mean()
         else:
-            
-            likelihood = p_y_pred.log_prob(stack_tensor(batch.y_target)).sum(dim=-1)
+            likelihood = p_y_pred.log_prob(batch.y_target).sum(dim=-1)
             out.context_likelihood = likelihood[..., :num_context].mean()
             out.target_likelihood = likelihood[..., num_context:].mean()
         

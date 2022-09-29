@@ -65,7 +65,7 @@ class LatentEncoder(nn.Module):
 
         self.post_model = BaseMLP(h_dim, z_dim*2, h_dim, num_layers=post_num_layers)
 
-    def forward(self, x, y):
+    def forward(self, x, y, mask=None):
         h = self.pre_model(torch.cat([x, y], dim=-1))
         if mask is None:
             h = h.mean(dim=-2)
