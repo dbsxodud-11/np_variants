@@ -1,10 +1,43 @@
 import os
 import argparse
 
-from utils.load_save import load_model, load_results_path
+from torch.optim import Adam
+from torch.optim.lr_scheduler import CosineAnnealingLR
 
-def train(args, model):
-    print("SUCCESS")
+from utils.log import RunningAverage
+from utils.load_save import load_task, load_model, load_results_path, load_logger, save_info, save_model
+
+def train(args, task, model):
+    save_info(args)
+
+    optimizer = Adam(model.parameters(), lr=args.lr)
+    scheduler = CosineAnnealingLR(optimizer, T_max=args.num_steps)
+    ravg = RunningAverage()
+
+    logger = load_logger(args.results_path)
+    logger.info(f'Total number of parameters: {sum(p.numel() for p in model.parameters())}\n')
+
+    for step in range(1, args.num_steps + 1):
+        model.train()
+        optimizer.zero_grad()
+        batch = task.sample(batch_size=args.train_batch_size,
+                            num_samples=args.max_num_points,
+                            device="cuda")
+        out = model(batch, num_samples=args.train_num_samples)
+        out.loss.backward()
+        optimizer.step()
+        scheduler.step()
+
+        for key, val in out.items():
+            ravg.update(key, val)
+
+        if step % args.print_freq == 0:
+            log = f'{args.model}:{args.exp_id}\tstep: {step}\t{ravg.info()}'
+            logger.info(log)
+            ravg.reset()
+        
+        if step % args.save_freq == 0 or step == args.num_steps:
+            save_model(args.results_path, model, optimizer, scheduler, step)
 
 
 if __name__ == "__main__":
@@ -30,13 +63,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
+    task = load_task(args.task)
     model = load_model(args.task, args.model)
-    results_path = load_results_path(args.task, args.model, args.exp_id)
-
-    if not os.path.isdir(results_path):
-        os.makedirs(results_path)
+    args.results_path = load_results_path(args.task, args.model, args.exp_id)
 
     if args.mode == 'train':
-        train(args, model)
+        train(args, task, model)
 
     
