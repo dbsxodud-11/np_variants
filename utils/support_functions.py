@@ -18,7 +18,10 @@ def sample_with_replacement(*items, num_samples):
 
     for i in range(len(items)):
         for _ in range(num_samples):
-            idx = np.random.choice(items[i].shape[1], size=items[i].shape[1], replace=True)
-            items_resample[i].append(items[i][:, idx, :])
+            idx = np.random.choice(items[i].shape[-2], size=items[i].shape[-2], replace=True)
+            items_resample[i].append(items[i][..., idx, :])
 
-    return [torch.cat(item_resample, dim=0) for item_resample in items_resample]
+    return [torch.stack(item_resample, dim=0) for item_resample in items_resample]
+
+def stack_tensor(x, num_samples=1, dim=0):
+    return torch.stack([x] * num_samples, dim=dim)

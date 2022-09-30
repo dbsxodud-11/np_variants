@@ -1,0 +1,7 @@
+dim: 1
+kernel: rbf
+lb: -2.0
+ub: 2.0
+sigma_eps: 0.001
+max_length: 0.6
+max_scale: 1.0
