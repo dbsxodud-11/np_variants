@@ -81,9 +81,9 @@ if __name__ == "__main__":
 
     parser.add_argument('--lr', type=float, default=5e-4)
     parser.add_argument('--num_steps', type=int, default=100000)
-    parser.add_argument('--print_freq', type=int, default=200)
+    parser.add_argument('--print_freq', type=int, default=5000)
     parser.add_argument('--eval_freq', type=int, default=5000)
-    parser.add_argument('--save_freq', type=int, default=1000)
+    parser.add_argument('--save_freq', type=int, default=5000)
 
     parser.add_argument('--eval_seed', type=int, default=42)
     parser.add_argument('--eval_num_batches', type=int, default=3000)

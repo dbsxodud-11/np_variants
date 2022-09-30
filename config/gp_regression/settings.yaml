@@ -1,4 +1,4 @@
-dim: 1
+dim: 10
 kernel: rbf
 lb: -2.0
 ub: 2.0
