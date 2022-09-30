@@ -5,7 +5,6 @@ from attrdict import AttrDict
 
 from utils.support_functions import sample_with_replacement, stack_tensor
 from models.cnp import CNP
-from models.building_blocks import Decoder
 
 
 class BNP(CNP):

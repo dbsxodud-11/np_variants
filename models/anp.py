@@ -1,12 +1,11 @@
 import math
 
 import torch
-import torch.nn as nn
 from attrdict import AttrDict
 
 from utils.support_functions import stack_tensor
 from models.np import NP
-from models.building_blocks import CrossAttentionEncoder, LatentEncoder, Decoder
+from models.building_blocks import CrossAttentionEncoder
 
 class ANP(NP):
     def __init__(self, x_dim, y_dim, r_dim=128, z_dim=128, h_dim=128,
