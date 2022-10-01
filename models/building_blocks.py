@@ -109,21 +109,20 @@ class CrossAttentionEncoder(nn.Module):
 
 class AttributeAttentionEncoder(nn.Module):
     def __init__(self, x_dim, y_dim, z_dim, h_dim, att_h_dim,
-                       qk_num_layers=2, v_num_layers=4, post_num_layers=2):
+                       pre_num_layers=4, post_num_layers=2):
         super(AttributeAttentionEncoder, self).__init__()
 
-        self.qk_pre_model = BaseMLP(x_dim + y_dim, h_dim, att_h_dim, num_layers=qk_num_layers)
-        self.v_pre_model = BaseMLP(x_dim + y_dim, h_dim, att_h_dim, num_layers=v_num_layers)
+        self.pre_model = BaseMLP(x_dim + y_dim, att_h_dim, h_dim, num_layers=pre_num_layers-2)
         self.attention = SelfAttention(att_h_dim, att_h_dim)
         self.post_model = BaseMLP((x_dim + y_dim) * att_h_dim, z_dim*2, h_dim, num_layers=post_num_layers)
 
     def forward(self, x, y, mask=None):
         h = torch.diag_embed(torch.cat([x, y], dim=-1))
-        q, k, v = self.qk_pre_model(h), self.qk_pre_model(h), self.v_pre_model(h)
+        
+        h = self.pre_model(h)
+        h = self.attention(h, mask=mask).flatten(start_dim=-2).mean(dim=-2)
 
-        v = self.attention(v, mask=mask).flatten(start_dim=-2).mean(dim=-2)
-
-        mu, pre_sigma = self.post_model(v).chunk(2, dim=-1)
+        mu, pre_sigma = self.post_model(h).chunk(2, dim=-1)
         sigma = 0.1 + 0.9 * torch.sigmoid(pre_sigma)
 
         return Normal(mu, sigma)

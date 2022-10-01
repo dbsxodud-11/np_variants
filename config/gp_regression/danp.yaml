@@ -4,7 +4,8 @@ r_dim: 256
 z_dim: 256
 h_dim: 256
 att_h_dim: 16
+enc_pre_num_layers: 4
+enc_post_num_layers: 2
 qk_num_layers: 2
 v_num_layers: 4
-post_num_layers: 2
 dec_num_layers: 4
