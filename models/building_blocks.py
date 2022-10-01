@@ -108,32 +108,21 @@ class CrossAttentionEncoder(nn.Module):
 
 
 class AttributeAttentionEncoder(nn.Module):
-    def __init__(self, x_dim, y_dim, z_dim, h_dim,
-                       qk_num_layers=2, v_num_layers=4, post_num_layers=2,
-                       self_attn=True):
+    def __init__(self, x_dim, y_dim, z_dim, h_dim, att_h_dim,
+                       qk_num_layers=2, v_num_layers=4, post_num_layers=2):
         super(AttributeAttentionEncoder, self).__init__()
 
-        self.qk_pre_model = BaseMLP(x_dim + y_dim, h_dim, h_dim, num_layers=qk_num_layers)
-        self.self_attn = self_attn
-
-        if self.self_attn:
-            self.v_pre_model = BaseMLP(x_dim + y_dim, h_dim, h_dim, num_layers=v_num_layers-2)
-            self.self_attention = SelfAttention(h_dim, h_dim)
-        else:
-            self.v_pre_model = BaseMLP(x_dim + y_dim, h_dim, h_dim, num_layers=v_num_layers)
-
-        self.cross_attention = MultiheadAttention(h_dim, h_dim, h_dim, z_dim)
-        self.post_model = BaseMLP(h_dim, z_dim*2, h_dim, num_layers=post_num_layers)
+        self.qk_pre_model = BaseMLP(x_dim + y_dim, h_dim, att_h_dim, num_layers=qk_num_layers)
+        self.v_pre_model = BaseMLP(x_dim + y_dim, h_dim, att_h_dim, num_layers=v_num_layers)
+        self.attention = SelfAttention(att_h_dim, att_h_dim)
+        self.post_model = BaseMLP((x_dim + y_dim) * att_h_dim, z_dim*2, h_dim, num_layers=post_num_layers)
 
     def forward(self, x, y, mask=None):
         h = torch.diag_embed(torch.cat([x, y], dim=-1))
-        q, k = self.qk_pre_model(h[..., -1:, :]), self.qk_pre_model(h[..., :-1, :])
-        v = self.v_pre_model(h[..., :-1, :])
+        q, k, v = self.qk_pre_model(h), self.qk_pre_model(h), self.v_pre_model(h)
 
-        if self.self_attn:
-            v = self.self_attention(v, mask=mask)
+        v = self.attention(v, mask=mask).flatten(start_dim=-2).mean(dim=-2)
 
-        v = self.cross_attention(q, k, v, mask=mask).squeeze(-2).mean(dim=-2)
         mu, pre_sigma = self.post_model(v).chunk(2, dim=-1)
         sigma = 0.1 + 0.9 * torch.sigmoid(pre_sigma)
 
