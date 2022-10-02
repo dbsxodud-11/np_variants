@@ -9,7 +9,7 @@ from models.building_blocks import CrossAttentionEncoder, AttributeAttentionEnco
 
 
 class DANP(nn.Module):
-    def __init__(self, x_dim, y_dim, r_dim=128, z_dim=128, h_dim=128, att_h_dim=16, 
+    def __init__(self, x_dim, y_dim, r_dim=128, z_dim=128, h_dim=128, 
                        enc_pre_num_layers=4, enc_post_num_layers=2, 
                        qk_num_layers=4, v_num_layers=2, dec_num_layers=3, 
                        self_attn=True):
@@ -20,7 +20,7 @@ class DANP(nn.Module):
                                                            v_num_layers=v_num_layers,
                                                            self_attn=self_attn)
 
-        self.latent_encoder = AttributeAttentionEncoder(x_dim, y_dim, z_dim, h_dim, att_h_dim,
+        self.latent_encoder = AttributeAttentionEncoder(x_dim, y_dim, z_dim, h_dim,
                                                         pre_num_layers=enc_pre_num_layers,
                                                         post_num_layers=enc_post_num_layers)
 
